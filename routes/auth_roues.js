@@ -1,20 +1,12 @@
 import express from 'express'
+import { login, logout, signup } from '../controllers/auth_controller.js'
 
 const auth_routes = express.Router()
 
-auth_routes.post('/signup', async (req, res) => {
+auth_routes.post('/signup', signup)
 
-    // * Will be imported from the controller file
-})
+auth_routes.post('/login', login)
 
-auth_routes.post('/login', async (req, res) => {
-
-    // * Function will be imported from the controller file
-})
-
-auth_routes.post('/logout', (req, res) => {
-
-    // * Function will be imported from the controller file
-})
+auth_routes.post('/logout', logout)
 
 export default auth_routes
