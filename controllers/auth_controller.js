@@ -9,14 +9,20 @@ export const signup = async (req, res, next) => {
     const session = await mongoose.startSession()
     session.startTransaction()
     try {
-        const { name, email, password } = req.body
+        const { username, email, password } = req.body
+
+        if (password.length < 6) {
+            const error = new Error('Password must be at least 6 characters long')
+            error.statusCode = status.BAD_REQUEST
+            throw error
+        }
 
         // Check if a user already exists
         const existingUser = await User.findOne({ email })
 
         if(existingUser) {
             const error = new Error('User already exists')
-            error.statusCode = 409
+            error.statusCode = status.CONFLICT
             throw error
         }
 
@@ -24,9 +30,15 @@ export const signup = async (req, res, next) => {
         const salt = await bcrypt.genSalt(10)
         const hashedPassword = await bcrypt.hash(password, salt)
 
-        const newUsers = await User.create([{ name, email, password: hashedPassword }], { session })
+        const newUser = new User({ username, email, password: hashedPassword })
 
-        const token = jwt.sign({ userId: newUsers[0]._id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN })
+        await newUser.save({ session })
+
+        const token = jwt.sign(
+            { userId: newUser._id },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN }
+        )
 
         await session.commitTransaction()
         session.endSession()
@@ -36,7 +48,7 @@ export const signup = async (req, res, next) => {
             message: 'User created successfully',
             data: {
                 token,
-                user: newUsers[0],
+                user: newUser,
             }
         })
     } catch (error) {
@@ -93,11 +105,4 @@ export const login = async (req, res, next) => {
     }
 }
 
-export const logout = async (req, res) => {
-
-    try {
-        // * Clear the cookie
-    } catch (error) {
-        // * Handle error
-    }
-}
+export const logout = async (req, res) => {}

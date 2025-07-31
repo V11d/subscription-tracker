@@ -1,41 +1,37 @@
 import status from "http-status"
 
 const error_middleware = (err, req, res, next) => {
-    try {
-        let error = { ...err }
+    console.error(err)
 
-        error.message = err.message
-
-        console.error(err)
-
-        // Mongoose bad ObjectId
-        if (err.name === 'CastError') {
-            const message = 'Resource not found'
-            error = new Error(message)
-            error.statusCode = status.NOT_FOUND
-        }
-
-        // Mongoose duplicate key
-        if (err.code === 11000) {
-            const message = '   Duplicate field value entered'
-            error = new Error(message)
-            error.statusCode = status.BAD_REQUEST
-        }
-
-        // Mongoose validation error
-        if (err.name === 'ValidationError') {
-            const message = Object.values(err.errors).map(val => val.message)
-            error = new Error(message.join(', '))
-            error.statusCode = status.BAD_REQUEST
-        }
-
-        res.status(error.statusCode || status.INTERNAL_SERVER_ERROR).json({
-            success: false,
-            error: error.message || 'Server Error'
-        })
-    } catch (error) {
-        next(error)
+    let error = {
+        statusCode: err.statusCode || status.INTERNAL_SERVER_ERROR,
+        message: err.message || 'Server Error'
     }
+
+    // Mongoose bad ObjectId
+    if (err.name === 'CastError') {
+        error.message = 'Resource not found'
+        error.statusCode = status.NOT_FOUND
+    }
+
+    // Mongoose duplicate key
+    if (err.code === 11000) {
+        const field = Object.keys(err.keyValue)[0]
+        error.message = `Duplicate value entered for field: ${field}`
+        error.statusCode = status.BAD_REQUEST
+    }
+
+    // Mongoose validation error
+    if (err.name === 'ValidationError') {
+        const messages = Object.values(err.errors).map(val => val.message)
+        error.message = messages.join(', ')
+        error.statusCode = status.BAD_REQUEST
+    }
+
+    res.status(error.statusCode).json({
+        success: false,
+        error: error.message
+    })
 }
 
 export default error_middleware
