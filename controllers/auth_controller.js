@@ -12,30 +12,32 @@ export const signup = async (req, res, next) => {
         const { username, email, password } = req.body
 
         if (password.length < 6) {
-            const error = new Error('Password must be at least 6 characters long')
-            error.statusCode = status.BAD_REQUEST
-            throw error
+            return res.status(status.BAD_REQUEST).json({
+                success: false,
+                message: 'Password must be at least 6 characters long'
+            })
         }
 
         // Check if a user already exists
         const existingUser = await User.findOne({ email })
 
         if(existingUser) {
-            const error = new Error('User already exists')
-            error.statusCode = status.CONFLICT
-            throw error
+            return res.status(status.CONFLICT).json({
+                success: false,
+                message: 'User already exists'
+            })
         }
 
         // Hash password
         const salt = await bcrypt.genSalt(10)
         const hashedPassword = await bcrypt.hash(password, salt)
 
-        const newUser = new User({ username, email, password: hashedPassword })
+        const new_user = new User({ username, email, password: hashedPassword })
 
-        await newUser.save({ session })
+        await new_user.save({ session })
 
         const token = jwt.sign(
-            { userId: newUser._id },
+            { userId: new_user._id },
             process.env.JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRES_IN }
         )
@@ -48,7 +50,11 @@ export const signup = async (req, res, next) => {
             message: 'User created successfully',
             data: {
                 token,
-                user: newUser,
+                user: {
+                    id: new_user._id,
+                    username: new_user.username,
+                    email: new_user.email
+                },
             }
         })
     } catch (error) {
@@ -66,9 +72,10 @@ export const login = async (req, res, next) => {
         const user = await User.findOne({email})
         // * If user doesn't exist
         if (!user) {
-            const error = new Error('User not found')
-            error.statusCode = status.NOT_FOUND
-            throw error
+            return res.status(status.UNAUTHORIZED).json({
+                success: false,
+                message: 'Invalid email or password'
+            })
         }
 
         // * Checking if password is correct
@@ -76,9 +83,10 @@ export const login = async (req, res, next) => {
 
         // * If password is incorrect
         if (!is_password_correct) {
-            const error = new Error('Incorrect password')
-            error.statusCode = status.UNAUTHORIZED
-            throw error
+            return res.status(status.UNAUTHORIZED).json({
+                success: false,
+                message: 'Invalid email or password'
+            })
         }
 
         // * Generating a jwt token

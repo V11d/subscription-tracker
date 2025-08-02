@@ -16,6 +16,10 @@ const user_schema = new mongoose.Schema({
         lowercase: true,
         match: [/\S+@\S+\.\S+/, 'Please enter a valid email address']
     },
+    is_admin: {
+        type: Boolean,
+        default: false
+    },
     password: {
         type: String,
         required: [true, 'Password is required'],
