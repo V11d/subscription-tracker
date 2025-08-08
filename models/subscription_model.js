@@ -25,7 +25,8 @@ const subscription_schema = new mongoose.Schema({
     },
     category: {
         type: String,
-        enum: ['sports', 'news', 'entertainment', 'education', 'gaming', 'other'],
+        enum: ['Sports', 'News', 'Entertainment', 'Education', 'Gaming', 'Other'],
+        trim: true
     },
     payment_method: {
         type: String,
@@ -41,9 +42,7 @@ const subscription_schema = new mongoose.Schema({
         type: Date,
         required: true,
         validate: {
-            validator: function (value) {
-                return value <= new Date()
-            },
+            validator: (value) => value <= new Date(),
             message: 'Start date cannot be in the future'
         }
     },

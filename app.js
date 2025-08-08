@@ -7,6 +7,7 @@ import subscription_routes from './routes/subscription_routes.js'
 import connect_to_db from './db/connect_to_db.js'
 import error_middleware from './middlewares/error_middleware.js'
 import arcjet_middleware from './middlewares/arcjet_middleware.js'
+import workflow_routes from './routes/workflow_routes.js'
 
 dotenv.config()
 
@@ -21,6 +22,7 @@ app.use(arcjet_middleware)
 app.use('/api/v1/auth', auth_routes)
 app.use('/api/v1/users', user_routes)
 app.use('/api/v1/subscriptions', subscription_routes)
+app.use('/api/v1/workflows', workflow_routes)
 
 app.use(error_middleware)
 
